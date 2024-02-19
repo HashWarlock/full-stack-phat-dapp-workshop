@@ -7,7 +7,7 @@ import "@phala/pink-env";
 import {decodeAbiParameters, encodeAbiParameters, parseAbiParameters} from "viem";
 
 type HexString = `0x${string}`;
-const encodeReplyAbiParams = 'uint respType, uint id, uint256 score';
+const encodeReplyAbiParams = 'uint respType, uint id, string[] greetings';
 const decodeRequestAbiParams = 'uint id, address target';
 
 function encodeReply(abiParams: string, reply: any): HexString {
@@ -55,14 +55,15 @@ function stringToHex(str: string): string {
     return "0x" + hex;
 }
 
-function fetchApiStats(apiUrl: string, apiKey: string, target: string): any {
+function fetchApiStats(apiUrl: string, target: string): any {
+    console.log("hi");
     let headers = {
         "Content-Type": "application/json",
         "User-Agent": "phat-contract"
     };
-    const baseApiUrl = `${apiUrl}/`
+    const baseApiUrl = `${apiUrl}`
     const getTargetGreeting = JSON.stringify({ query:`query getTargetGreeting 
-    { greetings(first: 25, orderBy: createdAt, orderDirection: desc) {
+    { greetings(where: { sender_: { address: "${target}" }}) {
       id
       greeting
       premium
@@ -85,8 +86,18 @@ function fetchApiStats(apiUrl: string, apiKey: string, target: string): any {
         ],
         10000 // Param for timeout in milliseconds. Your Phat Contract script has a timeout of 10 seconds
     )[0]; // Notice the [0]. This is important bc the `pink.batchHttpRequest` function expects an array of up to 5 HTTP requests.
+    console.log(response);
     const responseBody = getResponseBody(response);
-    return 1
+    let result = [];
+    let count = 1;
+    if (responseBody.data?.greetings) {
+        for (const targetGreeting of responseBody.data?.greetings) {
+            console.log(`[${count}]: ${targetGreeting.greeting}`);
+            result.push(targetGreeting.greeting);
+        }
+    }
+
+    return result;
 }
 
 function getResponseBody(response: any) {
@@ -127,20 +138,20 @@ export default function main(request: HexString, secrets: string): HexString {
         parsedSecrets = JSON.parse(secrets);
     } catch (error) {
         console.info("Malformed request received");
-        return encodeReply(encodeReplyAbiParams, [TYPE_ERROR, requestId, errorToCode(error as Error)]);
+        return encodeReply(encodeReplyAbiParams, [TYPE_ERROR, requestId, [error]]);
     }
     console.log(`Request received for profile ${targetAddress}`);
     try {
-        const targetAddressScore = fetchApiStats(parsedSecrets.apiUrl, parsedSecrets.apiKey, targetAddress.toLowerCase());
-        console.log("response:", [TYPE_RESPONSE, requestId, targetAddressScore]);
-        return encodeReply(encodeReplyAbiParams, [TYPE_RESPONSE, requestId, targetAddressScore]);
+        const targetAddressGreetings = fetchApiStats(parsedSecrets.apiUrl, targetAddress.toLowerCase());
+        console.log("response:", [TYPE_RESPONSE, requestId, targetAddressGreetings]);
+        return encodeReply(encodeReplyAbiParams, [TYPE_RESPONSE, requestId, targetAddressGreetings]);
     } catch (error) {
         if (error === Error.FailedToFetchData) {
             throw error;
         } else {
             // otherwise tell client we cannot process it
             console.log("error:", [TYPE_ERROR, requestId, error]);
-            return encodeReply(encodeReplyAbiParams, [TYPE_ERROR, requestId, errorToCode(error as Error)]);
+            return encodeReply(encodeReplyAbiParams, [TYPE_ERROR, requestId, [error]]);
         }
     }
 }
