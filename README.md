@@ -1,11 +1,12 @@
 # 🧙🏻‍♂️ An Introduction to Full Stack dapp Development 💻
 
-This workshop is built around Scaffold-ETH 2 and The Graph. You will learn how to:
+This workshop is built around Scaffold-ETH 2, The Graph, and Phala Network. You will learn how to:
 
-1. Setup a development environment for your dapp using Scaffold-ETH 2 and The Graph
+1. Setup a development environment for your dapp using Scaffold-ETH 2, The Graph, and Phala Network
 2. Update and deploy your smart contract
 3. Create and deploy a Subgraph to The Graph
-4. Edit your frontend to interact with both your smart contract and Subgraph
+4. Build a Phat Contract and watch for new action requests from your smart contract
+5. Make a request and watch the Phat Contract send Subgraph data back on-chain to your smart contract
 
 The URL for this tutorial is located at [bit.ly/fullstackdapp](https://github.com/kmjones1979/full-stack-dapp-workshop/blob/main/README.md)
 
