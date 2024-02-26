@@ -28,6 +28,7 @@
     "next:format": "yarn workspace @se-2/nextjs format",
     "next:check-types": "yarn workspace @se-2/nextjs check-types",
     "phat:build": "yarn workspace @phala/se-2 build-function",
+    "phat:create-profile": "yarn workspace @phala/se-2 create-profile",
     "phat:watch": "yarn workspace @phala/se-2 localhost-watch",
     "postinstall": "husky install",
     "precommit": "lint-staged",

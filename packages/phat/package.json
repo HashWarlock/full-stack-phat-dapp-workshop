@@ -6,7 +6,8 @@
   "scripts": {
     "build-function": "phat-fn build src/index.ts",
     "run-function": "phat-fn run dist/index.js",
-    "localhost-watch": "phat-fn watch 0x5FbDB2315678afecb367f032d93F642f64180aa3 ../hardhat/artifacts/contracts/YourContract.sol/YourContract.json ./dist/index.js -a '{\"apiUrl\": \"http://localhost:8000/subgraphs/name/scaffold-eth/your-contract\"}'",
+    "localhost-watch": "phat-fn watch 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 ../hardhat/artifacts/contracts/YourContract.sol/YourContract.json ./dist/index.js -a '{\"apiUrl\": \"http://localhost:8000/subgraphs/name/scaffold-eth/your-contract\"}'",
+    "create-profile": "phat-fn create-profile",
     "test-deploy-function": "phat-fn upload --coreSettings=",
     "main-deploy-function": "phat-fn upload --mode=production --coreSettings=",
     "test-update-function": "phat-fn update",
