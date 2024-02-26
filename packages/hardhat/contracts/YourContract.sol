@@ -1,12 +1,10 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.19;
 
 // Useful for debugging. Remove when deploying to a live network.
-import "hardhat/console.sol";
 import "@phala/solidity/contracts/PhatRollupAnchor.sol";
 
 // Use openzeppelin to inherit battle-tested implementations (ERC20, ERC721, etc)
-// import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * A smart contract that allows changing a state variable of the contract and tracking the changes
@@ -16,6 +14,7 @@ import "@phala/solidity/contracts/PhatRollupAnchor.sol";
 contract YourContract is PhatRollupAnchor {
 	// State Variables
 	address public immutable owner;
+	address public nftContract;
 	string public greeting = "Building Unstoppable Apps!!!";
 	bool public premium = false;
 	uint256 public totalCounter = 0;
@@ -39,8 +38,9 @@ contract YourContract is PhatRollupAnchor {
 
 	// Constructor: Called once on contract deployment
 	// Check packages/hardhat/deploy/00_deploy_your_contract.ts
-	constructor(address _owner) {
+	constructor(address _owner, address _nftContract) {
 		owner = _owner;
+		nftContract = _nftContract;
 		_grantRole(PhatRollupAnchor.ATTESTOR_ROLE, _owner);
 	}
 
@@ -57,18 +57,11 @@ contract YourContract is PhatRollupAnchor {
 	}
 
 	/**
-	 * Function that allows anyone to change the state variable "greeting" of the contract and increase the counters
-	 *
-	 * @param _newGreeting (string memory) - new greeting to save on the contract
+     * Function that allows anyone to change the state variable "greeting" of the contract and increase the counters
+     *
+     * @param _newGreeting (string memory) - new greeting to save on the contract
 	 */
 	function setGreeting(string memory _newGreeting) public payable {
-		// Print data to the hardhat chain console. Remove when deploying to a live network.
-		console.log(
-			"Setting new greeting '%s' from %s",
-			_newGreeting,
-			msg.sender
-		);
-
 		// Change state variables
 		greeting = _newGreeting;
 		totalCounter += 1;
@@ -86,9 +79,9 @@ contract YourContract is PhatRollupAnchor {
 	}
 
 	/**
-	 * Function to request for all of an accounts greetings
-	 *
-	 * @param target (address) - Target account address to request all greetings
+     * Function to request for all of an accounts greetings
+     *
+     * @param target (address) - Target account address to request all greetings
 	 */
 	function request(address target) public {
 		// assemble the request
@@ -99,11 +92,11 @@ contract YourContract is PhatRollupAnchor {
 	}
 
 	/**
-	 * Internal override function from PhatRollupAnchor that handles the response from the
-	 * Phat Contract that will return encoded bytes calldata of the response type, request id
-	 * and the array of greetings set by the account address requested in `request` function
-	 *
-	 * @param action (bytes calldata) - bytes calldata action reply from the Phat Contract
+     * Internal override function from PhatRollupAnchor that handles the response from the
+     * Phat Contract that will return encoded bytes calldata of the response type, request id
+     * and the array of greetings set by the account address requested in `request` function
+     *
+     * @param action (bytes calldata) - bytes calldata action reply from the Phat Contract
 	 */
 	function _onMessageReceived(bytes calldata action) internal override {
 		// Optional to check length of action
@@ -123,16 +116,16 @@ contract YourContract is PhatRollupAnchor {
 	}
 
 	/**
-	 * Function that allows the owner to withdraw all the Ether in the contract
-	 * The function can only be called by the owner of the contract as defined by the isOwner modifier
-	 */
+     * Function that allows the owner to withdraw all the Ether in the contract
+     * The function can only be called by the owner of the contract as defined by the isOwner modifier
+     */
 	function withdraw() public isOwner {
 		(bool success, ) = owner.call{ value: address(this).balance }("");
 		require(success, "Failed to send Ether");
 	}
 
 	/**
-	 * Function that allows the contract to receive ETH
-	 */
+     * Function that allows the contract to receive ETH
+     */
 	receive() external payable {}
 }

@@ -1,26 +1,17 @@
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.19;
 //SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import 'base64-sol/base64.sol';
-
-import './HexStrings.sol';
-import './ToColor.sol';
+import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
+import '@openzeppelin/contracts/utils/Base64.sol';
 
 contract YourCollectible is ERC721, Ownable {
-
-    using Strings for uint256;
-    using HexStrings for uint160;
-    using ToColor for bytes3;
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    uint256 public maxMintPerAddress;
+    uint256 public tokenId;
     mapping (uint256 => bytes3) public color;
-    mapping(address authorizedMinter => bool authorized) public authorizedMinters;
-
-    uint256 mintDeadline = block.timestamp + 72 hours;
+    mapping(address => bool) public authorizedMinters;
+    mapping(address => uint256) public mintCount;
 
     event AuthorizedMinterSet(address indexed minter, bool authorized);
 
@@ -34,9 +25,10 @@ contract YourCollectible is ERC721, Ownable {
         _;
     }
 
-    constructor(address yourContract) public ERC721("Yeahhh! Buoy SE2", "YBSE2") {
+    constructor(address yourContract) ERC721("Yeahhh! Buoy SE2", "YBSE2") Ownable() {
         // HELP ME! Deploy the buoysss
         maxMintPerAddress = 1;
+        tokenId = 1;
         authorizedMinters[msg.sender] = true;
         authorizedMinters[yourContract] = true;
         emit AuthorizedMinterSet(msg.sender, true);
@@ -49,22 +41,20 @@ contract YourCollectible is ERC721, Ownable {
     public onlyAuthorizedMinter onlyBelowMaxMint(to)
     returns (uint256)
     {
-        require( block.timestamp < mintDeadline, "DONE MINTING");
-        _tokenIds.increment();
 
-        uint256 id = _tokenIds.current();
-        _mint(msg.sender, id);
+        uint256 id = tokenId;
+        _mint(to, id);
 
-        bytes32 predictableRandom = keccak256(abi.encodePacked( blockhash(block.number-1), msg.sender, address(this) ));
+        bytes32 predictableRandom = keccak256(abi.encodePacked( blockhash(block.number-1), to, address(this) ));
         color[id] = bytes2(predictableRandom[0]) | ( bytes2(predictableRandom[1]) >> 8 ) | ( bytes3(predictableRandom[2]) >> 16 );
-
+        tokenId++;
         return id;
     }
 
     function tokenURI(uint256 id) public view override returns (string memory) {
-        require(_exists(id), "not exist");
-        string memory name = string(abi.encodePacked('Yeahhh! Buoy #',id.toString()));
-        string memory description = string(abi.encodePacked('This Buoy is the color #',color[id].toColor(),' & it saved ',(uint160(ownerOf(id))).toHexString(20),'\'s life!!!'));
+        require(_ownerOf(id) != address(0), 'Invalid Token ID!');
+        string memory name = string(abi.encodePacked('Yeahhh! Buoy #', Strings.toString(id)));
+        string memory description = string(abi.encodePacked('This Buoy is the color #', toColor(color[id]),' & it saved ', toHexString(uint160(_ownerOf(id)), 20),'\'s life!!!'));
         string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
 
         return
@@ -79,9 +69,9 @@ contract YourCollectible is ERC721, Ownable {
                             '", "description":"',
                             description,
                             '", "attributes": [{"trait_type": "color", "value": "#',
-                            color[id].toColor(),
+                            toColor(color[id]),
                             '"}], "owner":"',
-                            (uint160(ownerOf(id))).toHexString(20),
+                            toHexString(uint160(_ownerOf(id)), 20),
                             '", "image": "',
                             'data:image/svg+xml;base64,',
                             image,
@@ -96,7 +86,7 @@ contract YourCollectible is ERC721, Ownable {
     function generateSVGofTokenById(uint256 id) internal view returns (string memory) {
 
         string memory svg = string(abi.encodePacked(
-            '<svg width="640" height="640" xmlns="http://www.w3.org/2000/svg"> xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 64 64" version="1.1" xml:space="preserve">',
+            '<svg width="640" height="640" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 64 64" version="1.1" xml:space="preserve">',
             renderTokenById(id),
             '</svg>'
         ));
@@ -108,10 +98,11 @@ contract YourCollectible is ERC721, Ownable {
     function renderTokenById(uint256 id) public view returns (string memory) {
         string memory render = string(abi.encodePacked(
             '<g class="layer">',
-            '<g class="layer" id="svg_11" stroke="',
-            color[id].toColor(),
-            '" fill="',
-            color[id].toColor(),
+            '<title>Buoy</title>',
+            '<g class="layer" id="svg_11" stroke="#',
+            toColor(color[id]),
+            '" fill="#',
+            toColor(color[id]),
             '">',
             '<circle cx="320" cy="320" fill="none" id="svg_1" r="310" stroke-miterlimit="100" stroke-width="20"/>',
             '<circle cx="320" cy="320" id="svg_2" r="150" stroke-miterlimit="100" stroke-width="20"/>',
@@ -182,5 +173,28 @@ contract YourCollectible is ERC721, Ownable {
             _i /= 10;
         }
         return string(bstr);
+    }
+
+    bytes16 internal constant ALPHABET = '0123456789abcdef';
+
+    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+        bytes memory buffer = new bytes(2 * length + 2);
+        buffer[0] = '0';
+        buffer[1] = 'x';
+        for (uint256 i = 2 * length + 1; i > 1; --i) {
+            buffer[i] = ALPHABET[value & 0xf];
+            value >>= 4;
+        }
+        return string(buffer);
+
+    }
+
+    function toColor(bytes3 value) internal pure returns (string memory) {
+        bytes memory buffer = new bytes(6);
+        for (uint256 i = 0; i < 3; i++) {
+            buffer[i*2+1] = ALPHABET[uint8(value[i]) & 0xf];
+            buffer[i*2] = ALPHABET[uint8(value[i]>>4) & 0xf];
+        }
+        return string(buffer);
     }
 }
