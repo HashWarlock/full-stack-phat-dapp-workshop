@@ -3,6 +3,7 @@ import { parse, stringify } from "envfile";
 import * as fs from "fs";
 
 const envFilePath = "./.env";
+const phatEnvFilePath = "../phat/.env";
 
 /**
  * Generate a new random private key and write it to the .env file
@@ -15,10 +16,16 @@ const setNewEnvConfig = (existingEnvConfig = {}) => {
     ...existingEnvConfig,
     DEPLOYER_PRIVATE_KEY: randomWallet.privateKey,
   };
+  const phatNewEnvConfig = {
+    ...existingEnvConfig,
+    PRIVATE_KEY: randomWallet.privateKey,
+  }
 
   // Store in .env
   fs.writeFileSync(envFilePath, stringify(newEnvConfig));
   console.log("📄 Private Key saved to packages/hardhat/.env file");
+  fs.writeFileSync(phatEnvFilePath, stringify(phatNewEnvConfig));
+  console.log("📄 Private Key saved to packages/phat/.env file");
   console.log("🪄 Generated wallet address:", randomWallet.address);
 };
 
