@@ -22,10 +22,12 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
+  const localAddress = process.env.LOCAL_ACCOUNT_ADDRESS ?? '0x1d89009c0A5BA6E60c06546088d8bd60004ee018';
+
   await deploy("YourContract", {
     from: deployer,
     // Contract constructor arguments
-    args: ['0xaf7344C69C1e288221Eae307AC66Bf232447Be1A', '0xaf7344C69C1e288221Eae307AC66Bf232447Be1A'],
+    args: [localAddress, localAddress],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.

@@ -2,6 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
 
+const localAddress = process.env.LOCAL_ACCOUNT_ADDRESS ?? '0x1d89009c0A5BA6E60c06546088d8bd60004ee018';
+
 /**
  * Deploys a contract named "YourCollectible" using the deployer account and
  * constructor arguments set to the deployer address
@@ -25,7 +27,7 @@ const deployYourCollectible: DeployFunction = async function (hre: HardhatRuntim
     await deploy("YourCollectible", {
         from: deployer,
         // Contract constructor arguments
-        args: ['0xaf7344C69C1e288221Eae307AC66Bf232447Be1A'],
+        args: [localAddress],
         log: true,
         // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
         // automatically mining the contract deployment transaction. There is no effect on live networks.

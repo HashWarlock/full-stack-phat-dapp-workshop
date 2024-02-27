@@ -33,6 +33,7 @@
     "phat:watch": "yarn workspace @phala/se-2 localhost-watch",
     "postinstall": "husky install",
     "precommit": "lint-staged",
+    "test-set-attestor": "yarn workspace @se-2/hardhat test-set-attestor",
     "vercel": "yarn workspace @se-2/nextjs vercel",
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
     "stop-node": "yarn workspace @se-2/subgraph stop-node",
